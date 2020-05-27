@@ -6,15 +6,15 @@ using System.Diagnostics;
 
 public class AlfredWarrior : MonoBehaviour {
 
-    [SerializeField] float      m_speed = 1.0f;
-    [SerializeField] float      m_jumpForce = 2.0f;
+    [SerializeField] float m_speed = 1.0f;
+    [SerializeField] float m_jumpForce = 2.0f;
 
-    private Animator            m_animator;
-    private Rigidbody2D         m_body2d;
-    private Sensor_Bandit       m_groundSensor;
-    private bool                m_grounded = false;
-    private bool                m_combatIdle = false;
-    private bool                m_isDead = false;
+    private Animator m_animator;
+    private Rigidbody2D m_body2d;
+    private Sensor_Bandit m_groundSensor;
+    private bool m_grounded = false;
+    private bool m_combatIdle = false;
+    private bool m_isDead = false;
 
 
     bool isGrounded;
@@ -33,7 +33,14 @@ public class AlfredWarrior : MonoBehaviour {
     private static bool isFacingRight = true;
 
 
+    //смерть
+    public float deathDelay;
 
+    void death()
+    {
+        //destroy();
+        FindObjectOfType<gameManagerAlf>().gameOver();
+    }
 
 
 
@@ -73,7 +80,7 @@ public class AlfredWarrior : MonoBehaviour {
                 //Debug.Log("Hit" + enemy.name);
                 enemy.GetComponent<EnemyScript>().TakeDamage(attackDamage);
             }
-            
+
             Invoke("AttackReset", 1);
         }
 
@@ -135,8 +142,9 @@ public class AlfredWarrior : MonoBehaviour {
         myFx.PlayOneShot(JumpFX);
     }
 
-    // Use this for initialization
-    void Start () {
+    // Понеслась...
+
+    void Start() {
         m_animator = GetComponent<Animator>();
         m_body2d = GetComponent<Rigidbody2D>();
         m_groundSensor = transform.Find("GroundSensor").GetComponent<Sensor_Bandit>();
@@ -160,9 +168,16 @@ public class AlfredWarrior : MonoBehaviour {
 
 
     void Update() {
+
+        if (Time.timeScale == 0f)
+        {
+            return;
+        }
+
+
         parx = 0;
         parx2 = 0;
-        
+
 
         if (Input.GetKey(KeyCode.LeftArrow))
         {
@@ -175,7 +190,7 @@ public class AlfredWarrior : MonoBehaviour {
             parx = -parxSpeed;
             parx2 = -parxSpeed2;
 
-            
+
 
 
             if (speedX < 0 && isFacingRight)
@@ -198,7 +213,7 @@ public class AlfredWarrior : MonoBehaviour {
             parx = parxSpeed;
             parx2 = parxSpeed2;
 
-            
+
 
             if (speedX > 0 && !isFacingRight)
             {
@@ -221,10 +236,10 @@ public class AlfredWarrior : MonoBehaviour {
             m_animator.SetBool("Grounded", m_grounded);
         }
 
-        // -- Handle input and movement --
+        // второстепенное управление!
         float inputX = Input.GetAxis("Horizontal");
 
-        // Swap direction of sprite depending on walk direction
+        // смена направления(устарело)
         //if (inputX > 0)
         //    GetComponent<SpriteRenderer>().flipX = true;
         //else if (inputX < 0)
@@ -236,7 +251,7 @@ public class AlfredWarrior : MonoBehaviour {
         //Set AirSpeed in animator
         m_animator.SetFloat("AirSpeed", m_body2d.velocity.y);
 
-        // -- Handle Animations --
+
         //Death
         if (Input.GetKeyDown("e")) {
             if (!m_isDead)
@@ -246,17 +261,23 @@ public class AlfredWarrior : MonoBehaviour {
 
             m_isDead = !m_isDead;
         }
+        if (lifeScriptAlf.lifeValue <= 0)
+        {
+            //      SoundDeath();
+            // animator.SetBool("isDead", true);
+            Invoke("death", deathDelay);
 
-        //Hurt
-        else if (Input.GetKeyDown("q"))
-            m_animator.SetTrigger("Hurt");
+        }
 
-        //Attack
+        //дэмэдж
+        //else if (Input.GetKeyDown("q"))
 
+
+        //атака
 
         else if (Input.GetKeyDown("w"))
         {
-            
+
             if (attackAnim == true)
             {
                 attackAnim = false;
@@ -267,13 +288,15 @@ public class AlfredWarrior : MonoBehaviour {
 
             Invoke("Attack", attackDelay);
         }
-        
 
-        //Change between idle and combat idle
+
+        //Смена позиции (не знаю еще для чгео)
         else if (Input.GetKeyDown("f"))
             m_combatIdle = !m_combatIdle;
 
-        //Jump
+
+
+        //прыжок
         else if (Input.GetKeyDown("space") && m_grounded) {
             SoundJump();
             m_animator.SetTrigger("Jump");
@@ -296,9 +319,66 @@ public class AlfredWarrior : MonoBehaviour {
             m_animator.SetInteger("AnimState", 0);
     }
 
+    void Dscript()
+    {
+        SoundDamage();
+        m_body2d.velocity = Vector3.zero;
+        m_body2d.AddForce(transform.up * 6.0F, ForceMode2D.Impulse);
+        m_animator.SetTrigger("Hurt");
+    }
+
+    public void damaga()
+    {
+        SoundDamage();
+        m_body2d.velocity = Vector3.zero;
+        m_body2d.AddForce(transform.up * 6.0F, ForceMode2D.Impulse);
+        //lifeScriptAlf.lifeValue -= 3;
+        //FindObjectOfType<enemyAttack>().moshnost();
+        m_animator.SetTrigger("Hurt");
+    }
+
+
+   
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
+
+        if (collision.gameObject.tag == "Enemy")
+        {
+            //SoundDamage();
+            //m_body2d.velocity = Vector3.zero;
+            //m_body2d.AddForce(transform.up * 6.0F, ForceMode2D.Impulse);
+            // lifeScript.lifeValue -= 1;
+            // m_animator.SetTrigger("Hurt");
+            // SoundDamage();
+            // m_body2d.velocity = Vector3.zero;
+            //  m_body2d.AddForce(transform.up * 6.0F, ForceMode2D.Impulse);
+            lifeScriptAlf.lifeValue -= 1;
+            Dscript();
+            // m_animator.SetTrigger("Hurt");
+            // damaga();
+
+        }
+        if (collision.gameObject.tag == "cat")
+        {
+            Dscript();
+            lifeScriptAlf.lifeValue -= 4;
+
+
+
+        }
+        if (collision.gameObject.tag == "burningman")
+        {
+            Dscript();
+            lifeScriptAlf.lifeValue -= 3;
+
+        }
+        if (collision.gameObject.tag == "skeleton")
+        {
+            Dscript();
+            lifeScriptAlf.lifeValue -= 2;
+
+        }
 
         if (collision.gameObject.tag == "Cherry")
         {
@@ -314,6 +394,8 @@ public class AlfredWarrior : MonoBehaviour {
             SoundStar();
         }
 
+        
+
         if (collision.gameObject.tag == "Ground")
             isGrounded = true;
     }
@@ -325,4 +407,5 @@ public class AlfredWarrior : MonoBehaviour {
     }
 
 
+     
 }
